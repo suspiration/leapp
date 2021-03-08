@@ -15,9 +15,9 @@ import {NativeService} from '../services-system/native-service';
 })
 export class GsuiteConnectorService extends NativeService {
 
-  firstStepUrl = 'http://localhost:8080/api/v1/g_suite_auth/first_step';
-  secondStepUrl = 'http://localhost:8080/api/v1/g_suite_auth/second_step';
-  thirdStepUrl = 'http://localhost:8080/api/v1/g_suite_auth/third_step';
+  firstStepUrl = 'http://127.0.0.1:1234/api/v1/g_suite_auth/first_step';
+  secondStepUrl = 'http://127.0.0.1:1234/api/v1/g_suite_auth/second_step';
+  thirdStepUrl = 'http://127.0.0.1:1234/api/v1/g_suite_auth/third_step';
 
   httpOptions = {
     headers: new HttpHeaders({ 'Content-Type':  'application/json', 'Response-Type': 'json' })

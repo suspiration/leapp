@@ -9,7 +9,7 @@ export class MessageBrokerService {
   constructor(private websocketService: WebsocketService) {}
 
   initialize() {
-    this.websocketService.create('ws://localhost:8080/api/v1/ws/1');
+    this.websocketService.create('ws://127.0.0.1:1234/api/v1/ws/1');
     this.websocketService.connect(
       (msg) => { this.route(msg); },
       (err) => { this.handleRouteError(err); },
