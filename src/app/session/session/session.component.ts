@@ -124,6 +124,7 @@ export class SessionComponent extends AntiMemLeak implements OnInit, OnDestroy {
     });
 
     workspace.sessions = sessions;
+    this.credentialsService.refreshStrategySubcribeAll = false;
     this.configurationService.updateWorkspaceSync(workspace);
 
     this.activeSessions = session !== null ? this.activeSessions.filter(sess => sess.id !== session.id) : [];

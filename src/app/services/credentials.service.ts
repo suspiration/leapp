@@ -35,7 +35,6 @@ export class CredentialsService extends NativeService {
   awsSsoStrategy;
 
   refreshStrategySubcribeAll;
-  refreshStrategySubscribeSingle = {};
 
   constructor(
     private appService: AppService,
@@ -51,14 +50,14 @@ export class CredentialsService extends NativeService {
   ) {
     super();
 
-    this.refreshCredentialsEmit.subscribe((accountType) => this.refreshCredentials(accountType));
+    this.refreshCredentialsEmit.subscribe((accountType) => this.refreshCredentials());
 
     // =================================================
     // Subscribe to global timer manager from strategies
     // =================================================
 
     this.timerService.processRefreshByTimer.subscribe(() => {
-      this.refreshCredentials(null);
+      this.refreshCredentials();
     });
 
     // ==============================
@@ -76,29 +75,23 @@ export class CredentialsService extends NativeService {
     this.strategyMap[AccountType.AWS_SSO] = this.awsSsoStrategy.refreshCredentials.bind(this.awsSsoStrategy);
   }
 
-  refreshCredentials(accountType) {
+  refreshCredentials() {
     // Get all the info we need
     const workspace = this.configurationService.getDefaultWorkspaceSync();
+    if (!this.refreshStrategySubcribeAll) {
+      this.refreshStrategySubcribeAll = true;
 
-    if (accountType !== null) {
-      this.strategyMap[accountType](workspace, accountType).pipe(last()).subscribe(
-        () => this.appService.redrawList.emit(true),
-        e => {
-          this.appService.logger('Error in Aws Credential Process', LoggerLevel.ERROR, this, e.stack);
-          this.appService.toast('Error in Aws Credential Process: ' + e.toString(), ToastLevel.WARN, 'Aws Credential Process');
-          this.appService.redrawList.emit(true);
-      });
-    } else {
       this.refreshStrategySubcribeAll = concat(
         this.awsSsoStrategy.refreshCredentials(workspace),
         this.awsStrategy.refreshCredentials(workspace),
         this.azureStrategy.refreshCredentials(workspace)
       ).pipe(last()).subscribe(
-        () => this.appService.redrawList.emit(true),
-          e => {
-            this.appService.logger('Error in Aws Credential Process', LoggerLevel.ERROR, this, e.stack);
-            this.appService.toast('Error in Aws Credential Process: ' + e.toString(), ToastLevel.WARN, 'Aws Credential Process');
-            this.appService.redrawList.emit(true);
+        () => { this.appService.redrawList.emit(true); this.refreshStrategySubcribeAll = false; },
+        e => {
+          this.refreshStrategySubcribeAll = false;
+          this.appService.logger('Error in Aws Credential Process', LoggerLevel.ERROR, this, e.stack);
+          this.appService.toast('Error in Aws Credential Process: ' + e.toString(), ToastLevel.WARN, 'Aws Credential Process');
+          this.appService.redrawList.emit(true);
       });
     }
 
