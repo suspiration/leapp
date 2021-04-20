@@ -42,9 +42,6 @@ export class WorkspaceService extends NativeService {
   // Azure status
   public azureStatusEmit: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  // Credential refreshed
-  public credentialEmit: EventEmitter<{status: string, session: Session}> = new EventEmitter<{status: string, session: Session}>();
-
   constructor(
     private httpClient: HttpClient,
     private appService: AppService,
@@ -179,7 +176,6 @@ export class WorkspaceService extends NativeService {
             callback({cancel: true});
           }
         } catch (err) {
-          console.log(err);
           observer.next(false);
           observer.complete();
 
@@ -189,7 +185,6 @@ export class WorkspaceService extends NativeService {
         }
       });
     }, err => {
-      console.log(err);
       observer.next(false);
       observer.complete();
 
@@ -279,15 +274,11 @@ export class WorkspaceService extends NativeService {
           // Something went wrong save it to the logger file
           this.appService.logger(err.code, LoggerLevel.ERROR, this);
           this.appService.logger(err.stack, LoggerLevel.ERROR, this);
-          // this.appService.toast('There was a problem assuming role with SAML, please retry', ToastLevel.WARN);
+          this.appService.toast('There was a problem assuming role with SAML, please retry', ToastLevel.WARN);
 
           // Emit ko
-          this.credentialEmit.emit({status: err.stack, session });
-
-          // If we have a callback call it
-          if (callback) {
-            callback(data);
-          }
+          this.sessionService.stopSession(session);
+          throw err;
         }
       });
     }).catch(err => {
@@ -297,7 +288,8 @@ export class WorkspaceService extends NativeService {
       this.appService.toast('There was a problem assuming role with SAML, please retry', ToastLevel.WARN);
 
       // Emit ko
-      this.credentialEmit.emit({status: err.stack, session });
+      this.sessionService.stopSession(session);
+      throw err;
     });
   }
 
@@ -326,7 +318,8 @@ export class WorkspaceService extends NativeService {
       this.appService.toast(err, ToastLevel.ERROR);
 
       // Emit ko
-      this.credentialEmit.emit({status: err.stack, session});
+      this.sessionService.stopSession(session);
+      throw err;
     }
 
     // Write in aws credential file and workspace
@@ -354,7 +347,8 @@ export class WorkspaceService extends NativeService {
             this.appService.toast('There was a problem assuming role, please retry', ToastLevel.WARN);
 
             // Emit ko for double jump
-            this.credentialEmit.emit({status: err.stack, session});
+            this.sessionService.stopSession(session);
+            throw err;
           } else {
 
             // we set the new credentials after the first jump
@@ -364,22 +358,18 @@ export class WorkspaceService extends NativeService {
 
             this.configurationService.updateWorkspaceSync(workspace);
             this.configurationService.disableLoadingWhenReady(workspace, session);
-
-            // Emit ok for double jump
-            this.credentialEmit.emit({status: 'ok', session});
           }
         });
       } else {
         this.configurationService.disableLoadingWhenReady(workspace, session);
-        // Emit ok for single jump
-        this.credentialEmit.emit({status: 'ok', session});
       }
     } catch (err) {
       this.appService.logger(err, LoggerLevel.ERROR, this, err.stack);
       this.appService.toast(err, ToastLevel.ERROR);
 
       // Emit ko
-      this.credentialEmit.emit({status: err.stack, session});
+      this.sessionService.stopSession(session);
+      throw err;
     }
   }
 

@@ -117,7 +117,6 @@ export class AzureStrategy extends RefreshCredentialsStrategy {
       this.timerService.defineTimer();
 
       // Emit return credentials
-      this.credentialsService.refreshReturnStatusEmit.emit(true);
       observer.next(true);
       observer.complete();
     }, err2 => {
@@ -133,7 +132,6 @@ export class AzureStrategy extends RefreshCredentialsStrategy {
       });
 
       this.configurationService.updateWorkspaceSync(workspace);
-      this.credentialsService.refreshReturnStatusEmit.emit(session);
       this.appService.toast('Can\'t refresh Credentials.', ToastLevel.WARN, 'Credentials');
       observer.next(false);
       observer.complete();

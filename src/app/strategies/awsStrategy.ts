@@ -172,11 +172,7 @@ export class AwsStrategy extends RefreshCredentialsStrategy {
             this.appService.logger('Error in assume role from AWS SSO to truster in get session token: ', LoggerLevel.ERROR, this, err.stack);
             this.appService.toast('Error assuming role from AWS SSO account, check log for details.', LoggerLevel.WARN, 'Assume role Error');
 
-            // Emit ko for double jump
-            this.workspaceService.credentialEmit.emit({status: err.stack, session});
-
             this.sessionService.stopSession(session);
-
             this.appService.cleanCredentialFile();
           } else {
             // We set the new credentials after the first jump
@@ -233,7 +229,7 @@ export class AwsStrategy extends RefreshCredentialsStrategy {
           // This catch error is for panics which are not managed by their own procedures
           this.appService.logger('Error in Aws Credential Process', LoggerLevel.ERROR, this, e.stack);
           this.appService.toast('Error in Aws Credential Process: ' + e.toString(), ToastLevel.ERROR, 'Aws Credential Process');
-          this.credentialsService.refreshReturnStatusEmit.emit(session);
+          this.sessionService.stopSession(session);
           return of(false);
         }),
         switchMap(() => {
@@ -257,8 +253,6 @@ export class AwsStrategy extends RefreshCredentialsStrategy {
           this.appService.logger('Error in get session token', LoggerLevel.ERROR, this, err.stack);
           observable.error(err);
           observable.complete();
-          // Emit ko for double jump
-          this.workspaceService.credentialEmit.emit({status: err.stack, session});
         }
       };
 
@@ -334,9 +328,6 @@ export class AwsStrategy extends RefreshCredentialsStrategy {
                 this.appService.logger('Error in assume role from plain to truster in get session token: ', LoggerLevel.ERROR, this, err.stack);
                 this.appService.toast('Error assuming role from plain account, check log for details.', LoggerLevel.WARN, 'Assume role Error');
 
-                // Emit ko for double jump
-                this.workspaceService.credentialEmit.emit({status: err.stack, session});
-
                 workspace.sessions.forEach(sess => {
                   if (sess.id === session.id) {
                     sess.active = false;
@@ -369,9 +360,6 @@ export class AwsStrategy extends RefreshCredentialsStrategy {
           (err) => {
             this.appService.logger('Error in Aws Credential process', LoggerLevel.ERROR, this, err.stack);
             this.appService.toast('Error in Aws Credential process, check log for details.', LoggerLevel.WARN, 'Aws Credential process Error');
-
-            // Emit ko for double jump
-            this.workspaceService.credentialEmit.emit({status: err.stack, session});
 
             workspace.sessions.forEach(sess => {
               if (sess.id === session.id) {

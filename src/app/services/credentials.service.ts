@@ -53,8 +53,6 @@ export class CredentialsService extends NativeService {
 
     this.refreshCredentialsEmit.subscribe((accountType) => this.refreshCredentials(accountType));
 
-    this.workspaceService.credentialEmit.subscribe(res => this.processCredentials(res));
-
     // =================================================
     // Subscribe to global timer manager from strategies
     // =================================================
@@ -88,6 +86,7 @@ export class CredentialsService extends NativeService {
         e => {
           this.appService.logger('Error in Aws Credential Process', LoggerLevel.ERROR, this, e.stack);
           this.appService.toast('Error in Aws Credential Process: ' + e.toString(), ToastLevel.WARN, 'Aws Credential Process');
+          this.appService.redrawList.emit(true);
       });
     } else {
       this.refreshStrategySubcribeAll = concat(
@@ -99,24 +98,12 @@ export class CredentialsService extends NativeService {
           e => {
             this.appService.logger('Error in Aws Credential Process', LoggerLevel.ERROR, this, e.stack);
             this.appService.toast('Error in Aws Credential Process: ' + e.toString(), ToastLevel.WARN, 'Aws Credential Process');
+            this.appService.redrawList.emit(true);
       });
     }
 
     if (this.timerService.needToClearTimer()) {
       this.timerService.clearTimer();
-    }
-  }
-
-  /**
-   * Method that is launched when credential are emitted by the workspace service
-   * @param res - contain the status the operation
-   */
-  private processCredentials(res: any) {
-    if (res.status === 'ok') {
-      this.refreshReturnStatusEmit.emit(true);
-    } else {
-      this.appService.toast('There was a problem in generating credentials.', ToastLevel.WARN, 'Credentials');
-      this.refreshReturnStatusEmit.emit(res.session);
     }
   }
 }
